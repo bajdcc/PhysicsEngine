@@ -13,6 +13,7 @@ namespace TestPE
     {
         private bool _taskRunning;
         private Engine engine;
+        private Renderer render;
         private Runner runner;
 
         public MainForm()
@@ -25,7 +26,10 @@ namespace TestPE
             engine = new Engine();
             var path = new List<Point> {new Point(0, 0), new Point(0, 40), new Point(40, 40), new Point(40, 0)};
             var body = new Body(path);
+            body.Position = new Point(50, 50);
             engine.World.Add(body);
+            render = new Renderer(engine);
+            pictureBox1.Image = render.Bitmap;
             runner = new Runner(engine);
         }
 
@@ -41,6 +45,7 @@ namespace TestPE
             _taskRunning = await Task.Run(() =>
             {
                 runner.Update(DateTime.Now.Ticks);
+                render.Render();
                 try
                 {
                     BeginInvoke(new Action(() => pictureBox1.Refresh()));

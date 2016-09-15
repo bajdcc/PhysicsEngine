@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using CCPhysicsEngine2D.Common;
+using Point = CCPhysicsEngine2D.Common.Point;
 
 namespace CCPhysicsEngine2D.Base
 {
@@ -30,6 +32,7 @@ namespace CCPhysicsEngine2D.Base
         {
             Vertices = Vertices.Create(this, path);
             Parts.Add(this);
+            Render = new BodyRenderStruct(this);
         }
 
         public Point Position
@@ -264,6 +267,8 @@ namespace CCPhysicsEngine2D.Base
             }
         }
 
+        public BodyRenderStruct Render { get; set; }
+
         public void Update(double delta, double timescale, double correction, Bound bounds)
         {
             if (Math.Sign(Mass) == 0) return;
@@ -305,6 +310,51 @@ namespace CCPhysicsEngine2D.Base
                 }
                 part.Bounds.Update(Vertices, Velocity);
             }
+        }
+    }
+
+    public class BodyRenderStruct
+    {
+        public Color Fill { get; set; }
+
+        public Color Stroke { get; set; }
+
+        public Point Sprite { get; set; }
+
+        public BodyRenderStruct(Body body)
+        {
+            Fill = body.Static ? Color.FromArgb(0xee, 0xee, 0xee) : RandomColor.Random();
+            Stroke = ShadeColor(Fill, -20);
+            Sprite = (body.Bounds.Min - body.Position) / (body.Bounds.Max - body.Bounds.Min);
+        }
+
+        private Color ShadeColor(Color color, int percent)
+        {
+            var amount = (int) Math.Round(2.55*percent);
+            var R = Math.Min(Math.Max(0, color.R + amount), 255);
+            var G = Math.Min(Math.Max(0, color.G + amount), 255);
+            var B = Math.Min(Math.Max(0, color.B + amount), 255);
+            return Color.FromArgb(R, G, B);
+        }
+    }
+
+    public static class RandomColor
+    {
+        private static Random _random = new Random();
+        private static List<Color> _colors = new List<Color>();
+
+        static RandomColor()
+        {
+            _colors.Add(Color.FromArgb(0x55, 0x62, 0x70));
+            _colors.Add(Color.FromArgb(0x4e, 0xcd, 0xc4));
+            _colors.Add(Color.FromArgb(0xc7, 0xf4, 0x64));
+            _colors.Add(Color.FromArgb(0xff, 0x6b, 0x6b));
+            _colors.Add(Color.FromArgb(0xc4, 0x4d, 0x58));
+        }
+
+        public static Color Random()
+        {
+            return _colors[_random.Next(_colors.Count - 1)];
         }
     }
 }

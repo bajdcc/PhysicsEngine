@@ -55,6 +55,7 @@
     <Compile Include="Common\Point.cs" />
     <Compile Include="Common\Vertices.cs" />
     <Compile Include="Core\Engine.cs" />
+    <Compile Include="Core\Renderer.cs" />
     <Compile Include="Core\Runner.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

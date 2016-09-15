@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using CCPhysicsEngine2D.Base;
 
@@ -150,7 +151,7 @@ namespace CCPhysicsEngine2D.Common
             {
                 var j = (i == Vertexes.Count - 1) ? 0 : (i + 1);
                 var cross = Math.Abs(Vertexes[j].Cross(Vertexes[i]));
-                numerator += cross * (Vertexes[j].Dot(Vertexes[j]) + Vertexes[j].Dot(Vertexes[i])) + Vertexes[i].Dot(Vertexes[i]);
+                numerator += cross * (Vertexes[j].Dot(Vertexes[j]) + Vertexes[j].Dot(Vertexes[i]) + Vertexes[i].Dot(Vertexes[i]));
                 denominator += cross;
             }
 
@@ -213,6 +214,11 @@ namespace CCPhysicsEngine2D.Common
             lower.RemoveAt(lower.Count - 1);
 
             return new Vertices(upper.Concat(lower).ToList());
+        }
+
+        public PointF[] ToPointF()
+        {
+            return Vertexes.ConvertAll(x => new PointF((float) x.X, (float) x.Y)).ToArray();
         }
     }
 

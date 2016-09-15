@@ -69,6 +69,14 @@ namespace CCPhysicsEngine2D.Common
             return pt;
         }
 
+        public static Point operator /(Point lhs, Point rhs)
+        {
+            var pt = new Point(lhs);
+            pt.X /= rhs.X;
+            pt.Y /= rhs.Y;
+            return pt;
+        }
+
         public void Offset(Point pt)
         {
             X += pt.X;
