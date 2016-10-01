@@ -99,8 +99,7 @@ namespace CCPhysicsEngine2D.Common
 
                 var gradient = Math.Sign(normal.Y) == 0 ? "INF" : (normal.X / normal.Y).ToString("F3");
 
-                if (pts.ContainsKey(gradient))
-                    pts.Add(gradient, normal);
+                pts[gradient] = normal;
             }
 
             foreach (var v in pts.Values)

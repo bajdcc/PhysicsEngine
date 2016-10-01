@@ -12,11 +12,10 @@ namespace CCPhysicsEngine2D.Base
     /// </summary>
     public class Body : ObjBase
     {
-        private readonly List<Body> _parts = new List<Body>();
-        private readonly Point _position = new Point();
-        private readonly bool _static = false;
-        private readonly Point _velocity = new Point();
-        private readonly Point _positionPrev = new Point();
+        private List<Body> _parts = new List<Body>();
+        private Point _position = new Point();
+        private bool _static = false;
+        private Point _velocity = new Point();
         private double _angle;
         private double _angularVelocity;
         private double _density = 0.001;
@@ -24,14 +23,14 @@ namespace CCPhysicsEngine2D.Base
         private double _mass = 0.1;
         private Vertices _vertices;
         private double _anglePrev;
-        private double _inverseInertia;
-        private double _inverseMass;
-        private Body _parent;
 
-        public Body(List<Point> path)
+        public Body Parent { get; set; }
+
+        public void Init(List<Point> path)
         {
             Vertices = Vertices.Create(this, path);
             Parts.Add(this);
+            Parent = this;
             Render = new BodyRenderStruct(this);
         }
 
@@ -41,7 +40,7 @@ namespace CCPhysicsEngine2D.Base
             set
             {
                 var delta = value - _position;
-                _positionPrev.Offset(delta);
+                PositionPrev.Offset(delta);
 
                 foreach (var part in Parts)
                 {
@@ -52,6 +51,14 @@ namespace CCPhysicsEngine2D.Base
             }
         }
 
+        public Point PositionPrev { get; set; } = new Point();
+
+        public Point PositionImpulse { get; set; } = new Point();
+
+        public Point ConstraintImpulse { get; set; } = new Point();
+
+        public double ConstraintAngle { get; set; }
+
         public Point Force { get; set; } = new Point();
 
         public Point Velocity
@@ -59,8 +66,8 @@ namespace CCPhysicsEngine2D.Base
             get { return _velocity; }
             set
             {
-                _positionPrev.X = Position.X - value.X;
-                _positionPrev.Y = Position.Y - value.Y;
+                PositionPrev.X = Position.X - value.X;
+                PositionPrev.Y = Position.Y - value.Y;
                 Velocity.X = value.X;
                 Velocity.Y = value.Y;
                 Speed = _velocity.Magnitude();
@@ -69,12 +76,14 @@ namespace CCPhysicsEngine2D.Base
 
         public Bound Bounds { get; set; } = new Bound();
 
+        public Bound Region { get; set; }
+
         public double AngularVelocity
         {
             get { return _angularVelocity; }
             set
             {
-                _anglePrev = Angle - value;
+                AnglePrev = Angle - value;
                 _angularVelocity = value;
                 AngularSpeed = Math.Abs(_angularVelocity);
             }
@@ -85,8 +94,9 @@ namespace CCPhysicsEngine2D.Base
             get { return _angle; }
             set
             {
+                _angle = value;
                 var delta = value - _angle;
-                _anglePrev += delta;
+                AnglePrev += delta;
 
                 for (var i = 0; i < _parts.Count; i++)
                 {
@@ -103,7 +113,15 @@ namespace CCPhysicsEngine2D.Base
             }
         }
 
+        public double AnglePrev
+        {
+            get { return _anglePrev; }
+            set { _anglePrev = value; }
+        }
+
         public double Area { get; set; }
+
+        public double InverseMass { get; set; }
 
         public double Mass
         {
@@ -111,7 +129,7 @@ namespace CCPhysicsEngine2D.Base
             set
             {
                 _mass = value;
-                _inverseMass = 1/value;
+                InverseMass = 1/value;
                 _density = value/Area;
             }
         }
@@ -138,6 +156,10 @@ namespace CCPhysicsEngine2D.Base
 
         public double Timescale { get; set; } = 1;
 
+        public double Slop { get; set; } = 0.05;
+
+        public int TotalContacts { get; set; }
+
         public bool Visible { get; set; } = true;
 
         public bool Static
@@ -147,16 +169,17 @@ namespace CCPhysicsEngine2D.Base
             {
                 if (value)
                 {
+                    _static = true;
                     foreach (var part in Parts)
                     {
-                        part.Static = true;
+                        part._static = true;
                         part.Restitution = 0;
                         part.Friction = 1;
                         part._mass = part._inertia = part._density = double.MaxValue;
-                        part._inverseMass = part._inverseInertia = 0;
-                        part._positionPrev.X = part.Position.X;
-                        part._positionPrev.Y = part.Position.Y;
-                        part._anglePrev = part.Angle;
+                        part.InverseMass = part.InverseInertia = 0;
+                        part.PositionPrev.X = part.Position.X;
+                        part.PositionPrev.Y = part.Position.Y;
+                        part.AnglePrev = part.Angle;
                         part._angularVelocity = 0;
                         part.Speed = 0;
                         part.AngularSpeed = 0;
@@ -165,9 +188,10 @@ namespace CCPhysicsEngine2D.Base
                 }
                 else
                 {
+                    _static = false;
                     foreach (var part in Parts)
                     {
-                        part.Static = false;
+                        part._static = false;
                     }
                 }
             }
@@ -181,9 +205,11 @@ namespace CCPhysicsEngine2D.Base
             set
             {
                 _inertia = value;
-                _inverseInertia = 1/value;
+                InverseInertia = 1/value;
             }
         }
+
+        public double InverseInertia { get; set; }
 
         public double Friction { get; set; } = 0.1;
 
@@ -217,11 +243,11 @@ namespace CCPhysicsEngine2D.Base
                 var parts = value.ToList();
 
                 _parts.Add(this);
-                _parent = this;
+                Parent = this;
 
                 foreach (var part in parts.Where(x => x != this))
                 {
-                    part._parent = this;
+                    part.Parent = this;
                     _parts.Add(part);
                 }
 
@@ -255,11 +281,11 @@ namespace CCPhysicsEngine2D.Base
 
 
                 Area = area;
-                _parent = this;
+                Parent = this;
                 Position.X = centre.X;
                 Position.Y = centre.Y;
-                _positionPrev.X = centre.X;
-                _positionPrev.Y = centre.Y;
+                PositionPrev.X = centre.X;
+                PositionPrev.Y = centre.Y;
 
                 Mass = mass;
                 Inertia = inertia;
@@ -276,19 +302,19 @@ namespace CCPhysicsEngine2D.Base
             var deltaTimeSquared = Math.Pow(delta*timescale*Timescale, 2);
 
             var frictionAir = 1 - FrictionAir*timescale*Timescale;
-            var velocityPrevX = Position.X - _positionPrev.X;
-            var velocityPrevY = Position.Y - _positionPrev.Y;
+            var velocityPrevX = Position.X - PositionPrev.X;
+            var velocityPrevY = Position.Y - PositionPrev.Y;
 
             Velocity.X = velocityPrevX*frictionAir*correction + Force.X/Mass*deltaTimeSquared;
             Velocity.Y = velocityPrevY*frictionAir*correction + Force.Y/Mass*deltaTimeSquared;
 
-            _positionPrev.X = Position.X;
-            _positionPrev.Y = Position.Y;
+            PositionPrev.X = Position.X;
+            PositionPrev.Y = Position.Y;
             Position.X += Velocity.X;
             Position.Y += Velocity.Y;
 
-            _angularVelocity = (Angle - _anglePrev)*frictionAir*correction + Torque/Inertia*deltaTimeSquared;
-            _anglePrev = Angle;
+            _angularVelocity = (Angle - AnglePrev)*frictionAir*correction + Torque/Inertia*deltaTimeSquared;
+            AnglePrev = Angle;
             Angle += AngularVelocity;
 
             Speed = Velocity.Magnitude();

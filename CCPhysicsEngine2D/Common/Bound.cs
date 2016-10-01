@@ -1,4 +1,6 @@
-﻿namespace CCPhysicsEngine2D.Common
+﻿using System.Linq;
+
+namespace CCPhysicsEngine2D.Common
 {
     public class Bound
     {
@@ -8,17 +10,10 @@
 
         public void Update(Vertices vertices, Point velocity)
         {
-            Min.X = double.MaxValue;
-            Max.X = double.MinValue;
-            Min.Y = double.MaxValue;
-            Max.Y = double.MinValue;
-            foreach (var pt in vertices.Vertexes)
-            {
-                if (pt.X > Max.X) Max.X = pt.X;
-                if (pt.X < Min.X) Min.X = pt.X;
-                if (pt.Y > Max.Y) Max.Y = pt.Y;
-                if (pt.Y < Min.Y) Min.Y = pt.Y;
-            }
+            Min.X = vertices.Vertexes.Min(x => x.X);
+            Max.X = vertices.Vertexes.Max(x => x.X);
+            Min.Y = vertices.Vertexes.Min(x => x.Y);
+            Max.Y = vertices.Vertexes.Max(x => x.Y);
             if (velocity.X > 0)
             {
                 Max.X += velocity.X;
@@ -35,6 +30,11 @@
             {
                 Min.Y += velocity.Y;
             }
+        }
+
+        public override string ToString()
+        {
+            return Min.ToString() + Max.ToString();
         }
     }
 }

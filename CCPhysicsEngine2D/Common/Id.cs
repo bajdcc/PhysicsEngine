@@ -1,7 +1,7 @@
 ﻿namespace CCPhysicsEngine2D.Common
 {
     /// <summary>
-    /// _id
+    /// ID
     /// </summary>
     public class Id
     {
@@ -17,6 +17,21 @@
         public static Id Create()
         {
             return new Id(_id++);
+        }
+
+        public static bool operator <(Id a, Id b)
+        {
+            return a.Value < b.Value;
+        }
+
+        public static bool operator >(Id a, Id b)
+        {
+            return a.Value > b.Value;
+        }
+
+        public override string ToString()
+        {
+            return Value.ToString();
         }
     }
 }

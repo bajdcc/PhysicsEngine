@@ -16,11 +16,12 @@
 
         public bool Enable { get; set; } = true;
 
-        public long Frame { get; private set; }
-
         public long Timestamp { get; private set; }
 
+        public long FrameCount { get; set; }
+
         private double _timePrev;
+        private long _frame;
 
         private Engine _engine;
 
@@ -43,12 +44,13 @@
                 correction = 0;
             TimeScalePrev = _engine.Timescale;
             Correction = correction;
-            Frame++;
-            if (time - Timestamp > 1000)
+            _frame++;
+            FrameCount++;
+            if (time - Timestamp > 1e6)
             {
-                Fps = Frame * ((time - Timestamp) / 1000);
+                Fps = 1e7d * _frame /(time - Timestamp);
                 Timestamp = time;
-                Frame = 0;
+                _frame = 0;
             }
             _engine.Update(delta, correction);
         }

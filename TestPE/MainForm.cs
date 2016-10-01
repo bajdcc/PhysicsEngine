@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CCPhysicsEngine2D.Base;
@@ -24,13 +25,22 @@ namespace TestPE
         private void MainForm_Load(object sender, EventArgs e)
         {
             engine = new Engine();
-            var path = new List<Point> {new Point(0, 0), new Point(0, 40), new Point(40, 40), new Point(40, 0)};
-            var body = new Body(path);
-            body.Position = new Point(50, 50);
-            engine.World.Add(body);
-            render = new Renderer(engine);
-            pictureBox1.Image = render.Bitmap;
+            engine.World.Gravity.Direction.Y = 1;
+            double x = 10, y = 10, offset = 5, left = 0, right = 1000, top = 0, bottom = 500, thick = 10;
+            engine.World.Add(Factory.CreateRectangleBody(x + right/2, y + top - offset, right, thick, true));
+            engine.World.Add(Factory.CreateRectangleBody(x + right/2, y + bottom + offset, right, thick, true));
+            engine.World.Add(Factory.CreateRectangleBody(x + left - offset, y + bottom / 2, thick, bottom, true));
+            engine.World.Add(Factory.CreateRectangleBody(x + right + offset, y + bottom / 2, thick, bottom, true));
+            for (var i = 0; i < 4; i++)
+            {
+                for (var j = 0; j < 4; j++)
+                {
+                    engine.World.Add(Factory.CreateRectangleBody(50+i*80, 50+i*60, 70, 50));
+                }
+            }
             runner = new Runner(engine);
+            render = new Renderer(engine, runner);
+            pictureBox1.Image = render.Bitmap;
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -44,6 +54,17 @@ namespace TestPE
             _taskRunning = true;
             _taskRunning = await Task.Run(() =>
             {
+                if (runner.FrameCount%100 < 50)
+                {
+                    engine.World.Gravity.Direction.X = 0;
+                    engine.World.Gravity.Direction.Y = 1;
+                }
+                else
+                {
+                    var r = new Random();
+                    engine.World.Gravity.Direction.X = r.NextDouble()*Math.Sin(runner.FrameCount/10.0);
+                    engine.World.Gravity.Direction.Y = r.NextDouble()*Math.Sin(runner.FrameCount/10.0);
+                }
                 runner.Update(DateTime.Now.Ticks);
                 render.Render();
                 try

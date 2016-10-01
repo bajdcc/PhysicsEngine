@@ -38,6 +38,12 @@ namespace CCPhysicsEngine2D.Base
         public IEnumerable<Body> AllBodies =>
             Bodies.Union(Composites.SelectMany(composite => composite.AllBodies));
 
+        public IEnumerable<Constraint> AllConstraints =>
+            Constraints.Union(Composites.SelectMany(composite => composite.AllConstraints));
+
+        public IEnumerable<Composite> AllComposites =>
+            Composites.Union(Composites.SelectMany(composite => composite.AllComposites));
+
         public void Add(ObjBase obj)
         {
             switch (obj.Type)
@@ -46,15 +52,29 @@ namespace CCPhysicsEngine2D.Base
                     AddBody(obj as Body);
                     break;
                 case ObjType.Constraint:
+                    AddConstraint(obj as Constraint);
                     break;
                 case ObjType.Composite:
+                    AddComposite(obj as Composite);
                     break;
             }
         }
-
         private void AddBody(Body body)
         {
             Bodies.Add(body);
+            SetModified(true, true);
+        }
+
+        private void AddConstraint(Constraint constraint)
+        {
+            Constraints.Add(constraint);
+            SetModified(true, true);
+        }
+
+        private void AddComposite(Composite composite)
+        {
+            Composites.Add(composite);
+            composite.Parent = this;
             SetModified(true, true);
         }
     }
